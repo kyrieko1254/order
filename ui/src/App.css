@@ -1,0 +1,336 @@
+body {
+  background: #f3f6fa;
+}
+
+/* 전체 레이아웃 */
+.app-container {
+  min-height: 100vh;
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100vw;
+}
+
+.content-container {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  max-width: 900px;
+  margin: 1.5rem auto 0 auto;
+  padding: 2.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.main-title {
+  font-size: 2.1rem;
+  font-weight: 800;
+  margin-bottom: 2.2rem;
+  color: #222;
+  letter-spacing: 1px;
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+}
+
+.logo {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 2.5px;
+  font-family: 'Baloo 2', 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+  user-select: none;
+  text-shadow: 0 1px 0 #e3eaff;
+}
+
+/* 내비게이션 바 */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 0 2rem;
+  height: 60px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+.nav-menu {
+  display: flex;
+  gap: 1rem;
+}
+.nav-menu button {
+  background: transparent;
+  border: 1.5px solid transparent;
+  font-size: 1.1rem;
+  color: #fff;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-menu button.active {
+  background: #fff;
+  color: #2563eb;
+  border: 1.5px solid #fff;
+}
+.nav-menu button:hover:not(.active) {
+  background: #1746a2;
+  color: #fff;
+  border: 1.5px solid #1746a2;
+}
+
+/* 주문하기 화면 */
+.order-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  margin: 1rem 0;
+  padding-bottom: 40px;
+}
+.menu-list {
+  display: flex;
+  gap: 2rem;
+}
+.menu-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.menu-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  background: #eee;
+}
+.menu-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.menu-price {
+  color: #2563eb;
+  font-weight: bold;
+  margin-bottom: 0.7rem;
+}
+.menu-options {
+  width: 100%;
+  margin-bottom: 1rem;
+  font-size: 0.97rem;
+  padding-left: 16px;
+}
+.menu-options label {
+  display: block;
+  margin-bottom: 0.2rem;
+  cursor: pointer;
+}
+.add-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-btn:hover {
+  background: #1746a2;
+}
+
+/* 장바구니 */
+.cart-section {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  padding: 1.5rem 1.2rem;
+  margin-left: 0;
+  margin-top: 0;
+}
+.cart-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #222;
+  text-align: center;
+}
+.cart-empty {
+  color: #888;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+.cart-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+.cart-item {
+  display: grid;
+  grid-template-columns: 1.5fr 1.2fr 80px 32px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.98rem;
+}
+.cart-item span:last-child {
+  min-width: 60px;
+  text-align: right;
+  display: inline-block;
+  justify-self: end;
+}
+.remove-btn {
+  justify-self: end;
+}
+.remove-btn {
+  background: #e0e7ef;
+  color: #2563eb;
+  border: none;
+  border-radius: 50%;
+  width: 1.4em;
+  height: 1.4em;
+  font-size: 0.9em;
+  cursor: pointer;
+  margin-left: 0.5em;
+  transition: background 0.2s;
+  padding: 0;
+  line-height: 1.4em;
+  text-align: center;
+  display: inline-block;
+}
+.remove-btn:hover {
+  background: #2563eb;
+  color: #fff;
+}
+.cart-total {
+  font-weight: bold;
+  margin: 1rem 0 0.5rem 0;
+  text-align: right;
+}
+.order-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7em 1.2em;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+  width: 100%;
+  max-width: 160px;
+}
+.order-btn:hover {
+  background: #1746a2;
+}
+
+/* 관리자 화면 */
+.admin-section {
+  margin: 3rem auto;
+  text-align: center;
+  color: #888;
+  font-size: 1.2rem;
+}
+
+.cart-footer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+.cart-footer .cart-section {
+  margin: 0;
+  min-width: 0;
+  max-width: 900px;
+  width: 100%;
+  display: flex;
+  gap: 2rem;
+}
+.cart-left {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.cart-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  min-width: 140px;
+}
+.cart-total {
+  font-weight: bold;
+  margin: 1rem 0 0.5rem 0;
+  text-align: right;
+}
+.order-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7em 1.2em;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+  width: 100%;
+  max-width: 160px;
+}
+.order-btn:hover {
+  background: #1746a2;
+}
+@media (max-width: 700px) {
+  .cart-footer .cart-section {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .cart-right {
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  .order-btn {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .cart-footer .cart-section {
+    min-width: 0;
+    max-width: 100vw;
+    width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .order-section {
+    flex-direction: column;
+    align-items: center;
+  }
+  .menu-list {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .cart-section {
+    margin-left: 0;
+    margin-top: 2rem;
+    max-width: 100%;
+  }
+}
