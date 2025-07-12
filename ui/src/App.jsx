@@ -34,10 +34,32 @@ const MENU_LIST = [
   },
 ]
 
+// 관리자 대시보드 더미 데이터
+const DASHBOARD = [
+  { label: '총주문', value: 12 },
+  { label: '주문 접수', value: 3 },
+  { label: '제조 중', value: 2 },
+  { label: '제조 완료', value: 7 },
+]
+// 재고 더미 데이터
+const INIT_STOCKS = [
+  { id: 1, name: '아메리카노 (HOT)', stock: 10 },
+  { id: 2, name: '아메리카노 (ICE)', stock: 8 },
+  { id: 3, name: '카페라떼', stock: 15 },
+]
+// 주문 현황 더미 데이터
+const INIT_ORDERS = [
+  { id: 1, date: '2024-07-13 10:12', menu: '아메리카노 (HOT)', price: 3000, status: '주문 접수' },
+  { id: 2, date: '2024-07-13 10:15', menu: '카페라떼', price: 4000, status: '주문 접수' },
+  { id: 3, date: '2024-07-13 10:18', menu: '아메리카노 (ICE)', price: 3500, status: '제조 중' },
+]
+
 function App() {
   const [tab, setTab] = useState('order')
   const [cart, setCart] = useState([])
   const [selectedOptions, setSelectedOptions] = useState({})
+  const [stocks, setStocks] = useState(INIT_STOCKS)
+  const [orders, setOrders] = useState(INIT_ORDERS)
 
   const handleOptionChange = (menuId, optionId) => {
     setSelectedOptions((prev) => ({
@@ -89,6 +111,16 @@ function App() {
       }
     })
     return Array.from(map.values())
+  }
+
+  // 재고 증감
+  const handleStockChange = (id, diff) => {
+    setStocks(stocks => stocks.map(s => s.id === id ? { ...s, stock: Math.max(0, s.stock + diff) } : s))
+  }
+
+  // 주문 상태 변경
+  const handleStartMaking = (id) => {
+    setOrders(orders => orders.map(o => o.id === id ? { ...o, status: '제조 중' } : o))
   }
 
   return (
@@ -172,10 +204,67 @@ function App() {
             </div>
           </>
         )}
-        {/* 관리자 화면 (추후 구현) */}
+        {/* 관리자 화면 */}
         {tab === 'admin' && (
           <div className="admin-section">
-            <h2>관리자 화면 (준비 중)</h2>
+            {/* 대시보드 */}
+            <div className="admin-dashboard">
+              {DASHBOARD.map((item, i) => (
+                <div className="dashboard-item" key={i}>
+                  <div className="dashboard-label">{item.label}</div>
+                  <div className="dashboard-value">{item.value}</div>
+                </div>
+              ))}
+            </div>
+            {/* 재고 현황 */}
+            <div className="stock-section">
+              <div className="stock-title">재고 현황</div>
+              <div className="stock-list">
+                {stocks.map(stock => (
+                  <div className={`stock-item ${stock.stock === 0 ? 'soldout' : stock.stock < 5 ? 'warn' : 'normal'}`} key={stock.id}>
+                    <span className="stock-menu">{stock.name}</span>
+                    <span className="stock-count">{stock.stock}개</span>
+                    <span className="stock-status">
+                      {stock.stock === 0 ? '품절' : stock.stock < 5 ? '주의' : '정상'}
+                    </span>
+                    <div className="stock-btn-group">
+                      <button className="stock-btn" onClick={() => handleStockChange(stock.id, -1)} disabled={stock.stock === 0}>-</button>
+                      <button className="stock-btn" onClick={() => handleStockChange(stock.id, 1)}>+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* 주문 현황 */}
+            <div className="order-status-section">
+              <div className="order-status-title">주문 현황</div>
+              <table className="order-table">
+                <thead>
+                  <tr>
+                    <th>주문일시</th>
+                    <th>메뉴</th>
+                    <th>금액</th>
+                    <th>상태</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map(order => (
+                    <tr key={order.id}>
+                      <td>{order.date}</td>
+                      <td>{order.menu}</td>
+                      <td>{order.price.toLocaleString()}원</td>
+                      <td>{order.status}</td>
+                      <td>
+                        {order.status === '주문 접수' && (
+                          <button className="make-btn" onClick={() => handleStartMaking(order.id)}>제조 시작</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
