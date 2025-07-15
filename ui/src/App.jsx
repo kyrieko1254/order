@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 const MENU_LIST = [
@@ -58,8 +58,24 @@ function App() {
   const [tab, setTab] = useState('order')
   const [cart, setCart] = useState([])
   const [selectedOptions, setSelectedOptions] = useState({})
-  const [stocks, setStocks] = useState(INIT_STOCKS)
-  const [orders, setOrders] = useState(INIT_ORDERS)
+  const [stocks, setStocks] = useState([])
+  const [orders, setOrders] = useState([])
+
+  // 관리자 탭 진입 시 데이터베이스에서 재고/주문 현황 fetch
+  useEffect(() => {
+    if (tab === 'admin') {
+      // 재고 현황
+      fetch('http://localhost:3001/api/admin/stocks')
+        .then(res => res.json())
+        .then(data => setStocks(data))
+        .catch(() => setStocks([]))
+      // 주문 현황
+      fetch('http://localhost:3001/api/admin/orders')
+        .then(res => res.json())
+        .then(data => setOrders(data))
+        .catch(() => setOrders([]))
+    }
+  }, [tab])
 
   const handleOptionChange = (menuId, optionId) => {
     setSelectedOptions((prev) => ({
@@ -122,6 +138,44 @@ function App() {
   const handleStartMaking = (id) => {
     setOrders(orders => orders.map(o => o.id === id ? { ...o, status: '제조 중' } : o))
   }
+
+  // 주문하기 처리
+  const handleOrder = async () => {
+    if (cart.length === 0) return;
+    // 주문 데이터 구성
+    const grouped = getGroupedCart();
+    const items = grouped.map(item => ({
+      menu_id: item.id,
+      quantity: item.count
+    }));
+    const content = grouped.map(item => ({
+      menu: item.name,
+      options: Object.entries(item.options || {})
+        .filter(([_, v]) => v)
+        .map(([k]) => {
+          const opt = MENU_LIST.find(m => m.id === item.id)?.options.find(o => o.id === k)
+          return opt ? opt.label : ''
+        })
+    }));
+    const total_price = getCartTotal();
+    try {
+      const res = await fetch('http://localhost:3001/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, total_price, items })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('주문이 완료되었습니다!');
+        setCart([]);
+        // TODO: 재고/주문 현황 갱신 필요시 추가 fetch
+      } else {
+        alert(data.error || '주문 처리 중 오류가 발생했습니다.');
+      }
+    } catch (err) {
+      alert('서버와 통신할 수 없습니다.');
+    }
+  };
 
   return (
     <div className="app-container">
@@ -198,7 +252,7 @@ function App() {
                 </div>
                 <div className="cart-right">
                   <div className="cart-total">합계: {getCartTotal().toLocaleString()}원</div>
-                  <button className="order-btn">주문하기</button>
+                  <button className="order-btn" onClick={handleOrder}>주문하기</button>
                 </div>
               </div>
             </div>
@@ -221,16 +275,13 @@ function App() {
               <div className="stock-title">재고 현황</div>
               <div className="stock-list">
                 {stocks.map(stock => (
-                  <div className={`stock-item ${stock.stock === 0 ? 'soldout' : stock.stock < 5 ? 'warn' : 'normal'}`} key={stock.id}>
+                  <div className={`stock-item ${stock.stock === 0 ? 'soldout' : stock.stock < 5 ? 'warn' : 'normal'}`} key={stock.menu_id}>
                     <span className="stock-menu">{stock.name}</span>
                     <span className="stock-count">{stock.stock}개</span>
                     <span className="stock-status">
                       {stock.stock === 0 ? '품절' : stock.stock < 5 ? '주의' : '정상'}
                     </span>
-                    <div className="stock-btn-group">
-                      <button className="stock-btn" onClick={() => handleStockChange(stock.id, -1)} disabled={stock.stock === 0}>-</button>
-                      <button className="stock-btn" onClick={() => handleStockChange(stock.id, 1)}>+</button>
-                    </div>
+                    {/* 버튼 등은 필요시 추가 */}
                   </div>
                 ))}
               </div>
@@ -250,16 +301,23 @@ function App() {
                 </thead>
                 <tbody>
                   {orders.map(order => (
-                    <tr key={order.id}>
-                      <td>{order.date}</td>
-                      <td>{order.menu}</td>
-                      <td>{order.price.toLocaleString()}원</td>
-                      <td>{order.status}</td>
+                    <tr key={order.order_id}>
+                      <td>{order.ordered_at}</td>
                       <td>
-                        {order.status === '주문 접수' && (
-                          <button className="make-btn" onClick={() => handleStartMaking(order.id)}>제조 시작</button>
-                        )}
+                        {Array.isArray(order.content)
+                          ? order.content.map((c, i) => (
+                              <div key={i}>
+                                {c.menu}
+                                {c.options && c.options.length > 0 && (
+                                  <> ({c.options.join(', ')})</>
+                                )}
+                              </div>
+                            ))
+                          : ''}
                       </td>
+                      <td>{order.total_price?.toLocaleString()}원</td>
+                      <td>{order.status}</td>
+                      <td>{/* 상태에 따라 버튼 표시 */}</td>
                     </tr>
                   ))}
                 </tbody>
