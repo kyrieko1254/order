@@ -20,6 +20,7 @@ ui/.vite/
 # 백엔드
 server/node_modules/
 server/dist/
+server/.env
 
 # 기타
 *.log
