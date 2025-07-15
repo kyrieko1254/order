@@ -1,0 +1,27 @@
+# Node.js
+node_modules/
+.env
+.env.*
+
+# 로그
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 운영체제별
+.DS_Store
+Thumbs.db
+
+# 프런트엔드(Vite, React)
+ui/node_modules/
+ui/dist/
+ui/.vite/
+
+# 백엔드
+server/node_modules/
+server/dist/
+
+# 기타
+*.log
+.idea/
+.vscode/ 
