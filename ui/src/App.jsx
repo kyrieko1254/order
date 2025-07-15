@@ -1,39 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-const MENU_LIST = [
-  {
-    id: 1,
-    name: '아메리카노 (HOT)',
-    price: 3000,
-    image: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=400&q=80',
-    options: [
-      { id: 'shot', label: '샷 추가', price: 500 },
-      { id: 'syrup', label: '시럽 추가', price: 0 },
-    ],
-  },
-  {
-    id: 2,
-    name: '아메리카노 (ICE)',
-    price: 3000,
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
-    options: [
-      { id: 'shot', label: '샷 추가', price: 500 },
-      { id: 'syrup', label: '시럽 추가', price: 0 },
-    ],
-  },
-  {
-    id: 3,
-    name: '카페라떼',
-    price: 4000,
-    image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80',
-    options: [
-      { id: 'shot', label: '샷 추가', price: 500 },
-      { id: 'syrup', label: '시럽 추가', price: 0 },
-    ],
-  },
-]
-
+// MENU_LIST, INIT_STOCKS 등 더미 데이터는 제거 또는 주석 처리
 // 관리자 대시보드 더미 데이터
 const DASHBOARD = [
   { label: '총주문', value: 12 },
@@ -60,6 +28,15 @@ function App() {
   const [selectedOptions, setSelectedOptions] = useState({})
   const [stocks, setStocks] = useState([])
   const [orders, setOrders] = useState([])
+  const [menus, setMenus] = useState([])
+
+  // 앱 시작 시 메뉴 목록 fetch
+  useEffect(() => {
+    fetch('http://localhost:3001/api/menus')
+      .then(res => res.json())
+      .then(data => setMenus(data))
+      .catch(() => setMenus([]))
+  }, [])
 
   // 관리자 탭 진입 시 데이터베이스에서 재고/주문 현황 fetch
   useEffect(() => {
@@ -77,6 +54,7 @@ function App() {
     }
   }, [tab])
 
+  // handleOptionChange, handleAddToCart 등에서 MENU_LIST 대신 menus 사용
   const handleOptionChange = (menuId, optionId) => {
     setSelectedOptions((prev) => ({
       ...prev,
@@ -88,7 +66,7 @@ function App() {
   }
 
   const handleAddToCart = (menu) => {
-    const options = selectedOptions[menu.id] || {}
+    const options = selectedOptions[menu.menu_id] || {}
     setCart((prev) => [
       ...prev,
       { ...menu, options },
@@ -99,8 +77,9 @@ function App() {
     setCart((prev) => prev.filter((_, i) => i !== idx))
   }
 
+  // 옵션 라벨, 장바구니 등에서 menus 사용하도록 수정
   const getOptionLabel = (option, checked) =>
-    `${option.label}${option.price > 0 ? `(+${option.price.toLocaleString()})` : ''}${checked ? '' : ''}`
+    `${option.name || option.label}${option.price > 0 ? `(+${option.price.toLocaleString()})` : ''}${checked ? '' : ''}`
 
   const getCartTotal = () =>
     cart.reduce((sum, item) => {
@@ -108,7 +87,7 @@ function App() {
       for (const opt of item.options ? Object.entries(item.options) : []) {
         if (opt[1]) {
           const found = item.options && item.options[opt[0]]
-          const optionObj = item.options && MENU_LIST.find(m => m.id === item.id)?.options.find(o => o.id === opt[0])
+          const optionObj = item.options && menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === opt[0])
           if (optionObj && found) optionSum += optionObj.price
         }
       }
@@ -119,7 +98,7 @@ function App() {
   const getGroupedCart = () => {
     const map = new Map()
     cart.forEach(item => {
-      const key = item.id + '_' + JSON.stringify(item.options)
+      const key = item.menu_id + '_' + JSON.stringify(item.options)
       if (!map.has(key)) {
         map.set(key, { ...item, count: 1 })
       } else {
@@ -145,7 +124,7 @@ function App() {
     // 주문 데이터 구성
     const grouped = getGroupedCart();
     const items = grouped.map(item => ({
-      menu_id: item.id,
+      menu_id: item.menu_id,
       quantity: item.count
     }));
     const content = grouped.map(item => ({
@@ -153,8 +132,8 @@ function App() {
       options: Object.entries(item.options || {})
         .filter(([_, v]) => v)
         .map(([k]) => {
-          const opt = MENU_LIST.find(m => m.id === item.id)?.options.find(o => o.id === k)
-          return opt ? opt.label : ''
+          const opt = menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === k)
+          return opt ? opt.name : ''
         })
     }));
     const total_price = getCartTotal();
@@ -194,20 +173,20 @@ function App() {
           <>
             <div className="order-section">
               <div className="menu-list">
-                {MENU_LIST.map((menu) => (
-                  <div className="menu-card" key={menu.id}>
-                    <img className="menu-img" src={menu.image} alt={menu.name} />
+                {menus.map((menu) => (
+                  <div className="menu-card" key={menu.menu_id}>
+                    <img className="menu-img" src={menu.image_url} alt={menu.name} />
                     <div className="menu-title">{menu.name}</div>
                     <div className="menu-price">{menu.price.toLocaleString()}원</div>
                     <div className="menu-options">
-                      {menu.options.map((opt) => (
-                        <label key={opt.id}>
+                      {menu.options && menu.options.map((opt) => (
+                        <label key={opt.option_id || opt.id}>
                           <input
                             type="checkbox"
-                            checked={!!selectedOptions[menu.id]?.[opt.id]}
-                            onChange={() => handleOptionChange(menu.id, opt.id)}
+                            checked={!!selectedOptions[menu.menu_id]?.[opt.option_id || opt.id]}
+                            onChange={() => handleOptionChange(menu.menu_id, opt.option_id || opt.id)}
                           />
-                          {getOptionLabel(opt, !!selectedOptions[menu.id]?.[opt.id])}
+                          {getOptionLabel(opt, !!selectedOptions[menu.menu_id]?.[opt.option_id || opt.id])}
                         </label>
                       ))}
                     </div>
@@ -232,19 +211,19 @@ function App() {
                             {Object.entries(item.options || {})
                               .filter(([_, v]) => v)
                               .map(([k]) => {
-                                const opt = MENU_LIST.find(m => m.id === item.id)?.options.find(o => o.id === k)
-                                return opt ? `+${opt.label}` : ''
+                                const opt = menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === k)
+                                return opt ? `+${opt.name}` : ''
                               })
                               .join(' ')}
                           </span>
                           <span>{((item.price + Object.entries(item.options || {}).reduce((sum, [k, v]) => {
                             if (v) {
-                              const opt = MENU_LIST.find(m => m.id === item.id)?.options.find(o => o.id === k)
+                              const opt = menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === k)
                               return sum + (opt ? opt.price : 0)
                             }
                             return sum
                           }, 0)) * item.count).toLocaleString()}원</span>
-                          <button className="remove-btn" onClick={() => handleRemoveFromCart(cart.findIndex(c => c.id === item.id && JSON.stringify(c.options) === JSON.stringify(item.options)))}>X</button>
+                          <button className="remove-btn" onClick={() => handleRemoveFromCart(cart.findIndex(c => c.menu_id === item.menu_id && JSON.stringify(c.options) === JSON.stringify(item.options)))}>X</button>
                         </li>
                       ))}
                     </ul>

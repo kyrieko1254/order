@@ -79,10 +79,12 @@ app.post('/api/orders', async (req, res) => {
         [item.menu_id]
       );
       if (stockRes.rows.length === 0) {
-        throw new Error('존재하지 않는 메뉴입니다.');
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: '존재하지 않는 메뉴입니다.' });
       }
       if (stockRes.rows[0].stock < item.quantity) {
-        throw new Error('재고가 부족합니다.');
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: '재고가 부족합니다.' });
       }
       // 재고 차감
       await client.query(
