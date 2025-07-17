@@ -289,7 +289,7 @@ function App() {
                                 {c.menu}
                                 {c.options && c.options.length > 0 && (
                                   <> ({c.options.join(', ')})</>
-                                )}
+                        )}
                               </div>
                             ))
                           : ''}
