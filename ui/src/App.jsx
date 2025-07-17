@@ -22,6 +22,9 @@ const INIT_ORDERS = [
   { id: 3, date: '2024-07-13 10:18', menu: '아메리카노 (ICE)', price: 3500, status: '제조 중' },
 ]
 
+const API_URL = 'https://order-app-backend-6rtw.onrender.com'; // 배포용 백엔드 주소
+// const API_URL = 'http://localhost:3001'; // 개발용(로컬) 주소
+
 function App() {
   const [tab, setTab] = useState('order')
   const [cart, setCart] = useState([])
@@ -32,7 +35,7 @@ function App() {
 
   // 앱 시작 시 메뉴 목록 fetch
   useEffect(() => {
-    fetch('http://localhost:3001/api/menus')
+    fetch(`${API_URL}/api/menus`)
       .then(res => res.json())
       .then(data => setMenus(data))
       .catch(() => setMenus([]))
@@ -42,12 +45,12 @@ function App() {
   useEffect(() => {
     if (tab === 'admin') {
       // 재고 현황
-      fetch('http://localhost:3001/api/admin/stocks')
+      fetch(`${API_URL}/api/admin/stocks`)
         .then(res => res.json())
         .then(data => setStocks(data))
         .catch(() => setStocks([]))
       // 주문 현황
-      fetch('http://localhost:3001/api/admin/orders')
+      fetch(`${API_URL}/api/admin/orders`)
         .then(res => res.json())
         .then(data => setOrders(data))
         .catch(() => setOrders([]))
@@ -138,7 +141,7 @@ function App() {
     }));
     const total_price = getCartTotal();
     try {
-      const res = await fetch('http://localhost:3001/api/orders', {
+      const res = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, total_price, items })
