@@ -311,6 +311,13 @@ body {
   font-size: 1.1rem;
   margin-bottom: 0.2rem;
 }
+.stock-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
 .stock-status {
   font-size: 0.95rem;
   margin-bottom: 0.5rem;
@@ -395,6 +402,32 @@ body {
 }
 .make-btn:hover {
   background: #1746a2;
+}
+
+/* 주문 상태 변경 버튼 */
+.status-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 0.4em 1em;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.status-btn.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.status-btn.active:hover {
+  background: #1746a2;
+}
+
+.status-btn.completed {
+  background: #e0e7ef;
+  color: #666;
+  cursor: not-allowed;
 }
 
 .cart-footer {

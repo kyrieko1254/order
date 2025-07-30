@@ -74,6 +74,11 @@ function App() {
       ...prev,
       { ...menu, options },
     ])
+    // 옵션 선택 초기화
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [menu.menu_id]: {}
+    }))
   }
 
   const handleRemoveFromCart = (idx) => {
@@ -87,12 +92,17 @@ function App() {
   const getCartTotal = () =>
     cart.reduce((sum, item) => {
       let optionSum = 0
-      for (const opt of item.options ? Object.entries(item.options) : []) {
-        if (opt[1]) {
-          const found = item.options && item.options[opt[0]]
-          const optionObj = item.options && menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === opt[0])
-          if (optionObj && found) optionSum += optionObj.price
-        }
+      if (item.options) {
+        Object.entries(item.options).forEach(([optionId, isSelected]) => {
+          if (isSelected) {
+            const menu = menus.find(m => m.menu_id === item.menu_id)
+            // option_id를 문자열로 변환하여 비교
+            const option = menu?.options?.find(o => String(o.option_id) === String(optionId))
+            if (option) {
+              optionSum += option.price
+            }
+          }
+        })
       }
       return sum + item.price + optionSum
     }, 0)
@@ -112,13 +122,30 @@ function App() {
   }
 
   // 재고 증감
-  const handleStockChange = (id, diff) => {
-    setStocks(stocks => stocks.map(s => s.id === id ? { ...s, stock: Math.max(0, s.stock + diff) } : s))
+  const handleStockChange = (menuId, diff) => {
+    setStocks(stocks => stocks.map(s => s.menu_id === menuId ? { ...s, stock: Math.max(0, s.stock + diff) } : s))
   }
 
   // 주문 상태 변경
-  const handleStartMaking = (id) => {
-    setOrders(orders => orders.map(o => o.id === id ? { ...o, status: '제조 중' } : o))
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/orders/${orderId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (res.ok) {
+        // 로컬 상태 업데이트
+        setOrders(orders => orders.map(o => 
+          o.order_id === orderId ? { ...o, status: newStatus } : o
+        ));
+      } else {
+        alert('주문 상태 변경에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('서버와 통신할 수 없습니다.');
+    }
   }
 
   // 주문하기 처리
@@ -136,8 +163,9 @@ function App() {
         .filter(([_, v]) => v)
         .map(([k]) => {
           const opt = menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === k)
-          return opt ? opt.name : ''
+          return opt ? opt.name : null
         })
+        .filter(optionName => optionName !== null && optionName !== '')
     }));
     const total_price = getCartTotal();
     try {
@@ -170,7 +198,6 @@ function App() {
         </div>
       </nav>
       <div className="content-container">
-        <h1 className="main-title">COZY – 커피 주문 앱</h1>
         {/* 주문하기 화면 */}
         {tab === 'order' && (
           <>
@@ -207,25 +234,39 @@ function App() {
                     <div className="cart-empty">장바구니가 비어 있습니다.</div>
                   ) : (
                     <ul className="cart-list">
-                      {getGroupedCart().map((item, idx) => (
-                        <li key={idx} className="cart-item">
-                          <span>{item.name}{item.count > 1 ? ` x${item.count}` : ''}</span>
-                          <span>
-                            {Object.entries(item.options || {})
-                              .filter(([_, v]) => v)
-                              .map(([k]) => {
-                                const opt = menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === k)
-                                return opt ? `+${opt.name}` : ''
+                                              {getGroupedCart().map((item, idx) => (
+                          <li key={idx} className="cart-item">
+                            <span>
+                              {item.name}
+                              {Object.entries(item.options || {})
+                                .filter(([_, v]) => v)
+                                .map(([k]) => {
+                                  const opt = menus.find(m => m.menu_id === item.menu_id)?.options.find(o => String(o.option_id) === String(k))
+                                  return opt ? (
+                                    <span key={k} style={{ color: '#666', fontSize: '0.85rem' }}>
+                                      {' '}({opt.name})
+                                    </span>
+                                  ) : null
+                                })}
+                              {item.count > 1 ? ` x${item.count}` : ''}
+                            </span>
+                            <span></span>
+                            <span>{(() => {
+                            let itemPrice = item.price
+                            if (item.options) {
+                              Object.entries(item.options).forEach(([optionId, isSelected]) => {
+                                if (isSelected) {
+                                  const menu = menus.find(m => m.menu_id === item.menu_id)
+                                  // option_id를 문자열로 변환하여 비교
+                                  const option = menu?.options?.find(o => String(o.option_id) === String(optionId))
+                                  if (option) {
+                                    itemPrice += option.price
+                                  }
+                                }
                               })
-                              .join(' ')}
-                          </span>
-                          <span>{((item.price + Object.entries(item.options || {}).reduce((sum, [k, v]) => {
-                            if (v) {
-                              const opt = menus.find(m => m.menu_id === item.menu_id)?.options.find(o => o.option_id === k)
-                              return sum + (opt ? opt.price : 0)
                             }
-                            return sum
-                          }, 0)) * item.count).toLocaleString()}원</span>
+                            return (itemPrice * item.count).toLocaleString()
+                          })()}원</span>
                           <button className="remove-btn" onClick={() => handleRemoveFromCart(cart.findIndex(c => c.menu_id === item.menu_id && JSON.stringify(c.options) === JSON.stringify(item.options)))}>X</button>
                         </li>
                       ))}
@@ -259,11 +300,25 @@ function App() {
                 {stocks.map(stock => (
                   <div className={`stock-item ${stock.stock === 0 ? 'soldout' : stock.stock < 5 ? 'warn' : 'normal'}`} key={stock.menu_id}>
                     <span className="stock-menu">{stock.name}</span>
-                    <span className="stock-count">{stock.stock}개</span>
+                    <div className="stock-controls">
+                      <button 
+                        className="stock-btn minus" 
+                        onClick={() => handleStockChange(stock.menu_id, -1)}
+                        disabled={stock.stock <= 0}
+                      >
+                        -
+                      </button>
+                      <span className="stock-count">{stock.stock}개</span>
+                      <button 
+                        className="stock-btn plus" 
+                        onClick={() => handleStockChange(stock.menu_id, 1)}
+                      >
+                        +
+                      </button>
+                    </div>
                     <span className="stock-status">
                       {stock.stock === 0 ? '품절' : stock.stock < 5 ? '주의' : '정상'}
                     </span>
-                    {/* 버튼 등은 필요시 추가 */}
                   </div>
                 ))}
               </div>
@@ -284,22 +339,59 @@ function App() {
                 <tbody>
                   {orders.map(order => (
                     <tr key={order.order_id}>
-                      <td>{order.ordered_at}</td>
+                      <td>{(() => {
+                        const date = new Date(order.ordered_at);
+                        return date.toLocaleString('ko-KR', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        });
+                      })()}</td>
                       <td>
                         {Array.isArray(order.content)
-                          ? order.content.map((c, i) => (
-                              <div key={i}>
-                                {c.menu}
-                                {c.options && c.options.length > 0 && (
-                                  <> ({c.options.join(', ')})</>
-                        )}
-                              </div>
-                            ))
+                          ? order.content.map((c, i) => {
+                              console.log('주문 내용:', c); // 디버깅용
+                              return (
+                                <div key={i} style={{ fontSize: '0.9rem' }}>
+                                  {c.menu}
+                                  {c.options && Array.isArray(c.options) && c.options.length > 0 && c.options.some(opt => opt && opt.trim() !== '') && (
+                                    <span style={{ color: '#666', fontSize: '0.85rem' }}>
+                                      {' '}({c.options.filter(opt => opt && opt.trim() !== '').join(', ')})
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })
                           : ''}
                       </td>
                       <td>{order.total_price?.toLocaleString()}원</td>
                       <td>{order.status}</td>
-                      <td>{/* 상태에 따라 버튼 표시 */}</td>
+                      <td>
+                        {order.status === '주문 접수' && (
+                          <button 
+                            className="status-btn active" 
+                            onClick={() => handleStatusChange(order.order_id, '제조 중')}
+                          >
+                            제조 시작
+                          </button>
+                        )}
+                        {order.status === '제조 중' && (
+                          <button 
+                            className="status-btn active" 
+                            onClick={() => handleStatusChange(order.order_id, '완료')}
+                          >
+                            제조 완료
+                          </button>
+                        )}
+                        {order.status === '완료' && (
+                          <button className="status-btn completed" disabled>
+                            완료
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
